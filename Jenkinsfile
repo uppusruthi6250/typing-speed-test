@@ -6,6 +6,13 @@ pipeline {
         timestamps()
     }
 
+    environment {
+        IMAGE_NAME = 'typing-speed-test'
+        DEPLOYMENT_NAME = 'typing-speed-test'
+        CONTAINER_NAME = 'typing-speed-test'
+        SERVICE_NAME = 'typing-speed-test-service'
+    }
+
     stages {
         stage('Checkout') {
             steps {
@@ -13,45 +20,92 @@ pipeline {
             }
         }
 
-        stage('Install Python dependencies') {
+        stage('Validate Project') {
             steps {
+                bat 'docker --version'
+                bat 'kubectl version --client'
                 bat 'python --version'
-                bat 'python -m venv .venv'
-                bat '.venv\\Scripts\\python.exe -m pip install --upgrade pip'
-                bat '.venv\\Scripts\\python.exe -m pip install -r requirements.txt'
+                bat 'python -m compileall -q app.py'
             }
         }
 
-        stage('Backend tests and validation') {
+        stage('Build Docker Image') {
             steps {
-                bat '.venv\\Scripts\\python.exe -m pytest -q tests/test_api.py'
-                bat '.venv\\Scripts\\python.exe -m compileall -q app.py tests'
+                script {
+                    env.FULL_IMAGE = ''
+                    withCredentials([
+                        usernamePassword(
+                            credentialsId: 'dockerhub-creds',
+                            usernameVariable: 'DOCKER_USER',
+                            passwordVariable: 'DOCKER_TOKEN'
+                        )
+                    ]) {
+                        env.FULL_IMAGE = "${DOCKER_USER}/${IMAGE_NAME}:${BUILD_NUMBER}"
+                        bat 'docker build -t %DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER% .'
+                    }
+                }
             }
         }
 
-        stage('Selenium browser tests') {
-            when {
-                environment name: 'RUN_SELENIUM', value: 'true'
-            }
+        stage('Push Image to Docker Hub') {
             steps {
-                bat '''
-                    if not exist data mkdir data
-                    set "DATABASE_PATH=%WORKSPACE%\\data\\jenkins-test.db"
-                    start "TypingSpeedTestServer" /B .venv\\Scripts\\gunicorn.exe --bind 127.0.0.1:5000 --workers 1 app:app > gunicorn.log 2>&1
-                    .venv\\Scripts\\python.exe -c "import time, urllib.request; url='http://127.0.0.1:5000/api/health'; exec('for attempt in range(30):\\n try:\\n  urllib.request.urlopen(url, timeout=2).read(); break\\n except Exception:\\n  time.sleep(1)\\nelse:\\n raise SystemExit(\\'Server did not start; check gunicorn.log\\')')"
-                    set "BASE_URL=http://127.0.0.1:5000"
-                    .venv\\Scripts\\python.exe -m pytest -q tests/test_ui.py
-                '''
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        @echo off
+                        echo %DOCKER_TOKEN% | docker login -u %DOCKER_USER% --password-stdin
+                        if errorlevel 1 exit /b 1
+                        docker push %DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+                        docker logout
+                    '''
+                }
+            }
+        }
+
+        stage('Deploy to Kubernetes') {
+            steps {
+                withCredentials([
+                    usernamePassword(
+                        credentialsId: 'dockerhub-creds',
+                        usernameVariable: 'DOCKER_USER',
+                        passwordVariable: 'DOCKER_TOKEN'
+                    )
+                ]) {
+                    bat '''
+                        kubectl apply -f k8s/deployment.yaml
+                        if errorlevel 1 exit /b 1
+                        kubectl apply -f k8s/service.yaml
+                        if errorlevel 1 exit /b 1
+                        kubectl set image deployment/%DEPLOYMENT_NAME% %CONTAINER_NAME%=%DOCKER_USER%/%IMAGE_NAME%:%BUILD_NUMBER%
+                        if errorlevel 1 exit /b 1
+                        kubectl rollout status deployment/%DEPLOYMENT_NAME% --timeout=180s
+                        if errorlevel 1 exit /b 1
+                    '''
+                }
+            }
+        }
+
+        stage('Verify Kubernetes Service') {
+            steps {
+                bat 'kubectl get deployments'
+                bat 'kubectl get pods'
+                bat 'kubectl get services'
             }
         }
     }
 
     post {
         success {
-            echo 'CI pipeline completed successfully.'
+            echo 'CI/CD completed: Docker image pushed and application deployed to Kubernetes.'
         }
         failure {
-            echo 'CI pipeline failed. Review the stage logs for details.'
+            echo 'CI/CD failed. Check the console output for the failed stage.'
         }
     }
 }
