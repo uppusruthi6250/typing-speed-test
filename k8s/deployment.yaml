@@ -1,9 +1,8 @@
+
 apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: typing-speed-test
-  labels:
-    app: typing-speed-test
 spec:
   replicas: 1
   selector:
@@ -14,37 +13,15 @@ spec:
       labels:
         app: typing-speed-test
     spec:
-      securityContext:
-        runAsNonRoot: true
-        runAsUser: 10001
-        runAsGroup: 10001
-        fsGroup: 10001
       containers:
         - name: typing-speed-test
-          image: typing-speed-test:local
-          imagePullPolicy: IfNotPresent
+          image: uppusruthi6250/typing-speed-test:latest
+          imagePullPolicy: Always
           ports:
-            - name: http
-              containerPort: 5000
-          env:
-            - name: DATABASE_PATH
-              value: /app/data/typing_test.db
-          volumeMounts:
-            - name: result-data
-              mountPath: /app/data
+            - containerPort: 5000
           readinessProbe:
             httpGet:
               path: /api/health
-              port: http
-            initialDelaySeconds: 3
-            periodSeconds: 5
-          livenessProbe:
-            httpGet:
-              path: /api/health
-              port: http
-            initialDelaySeconds: 10
+              port: 5000
+            initialDelaySeconds: 5
             periodSeconds: 10
-      volumes:
-        - name: result-data
-          persistentVolumeClaim:
-            claimName: typing-speed-test-data
