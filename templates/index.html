@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Practice typing and track your speed and accuracy.">
+    <title>Typing Speed Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</head>
+<body>
+    <main class="page-shell">
+        <header class="page-header">
+            <p class="eyebrow">Practice makes progress</p>
+            <h1>Typing Speed Test</h1>
+            <p class="intro">Choose a time limit, then type the fresh passage before time runs out. Your results open on a separate page when you finish.</p>
+        </header>
+
+        <section class="test-card" aria-labelledby="test-heading">
+            <div class="card-heading">
+                <div>
+                    <h2 id="test-heading">Your typing challenge</h2>
+                    <p class="muted">A different passage is selected for each new test.</p>
+                </div>
+                <div class="timer-box" aria-live="off">
+                    <span class="timer-label">Time remaining</span>
+                    <strong id="timer" aria-label="1 minute remaining">1:00</strong>
+                </div>
+            </div>
+
+            <div class="duration-control">
+                <label for="duration-select">Test duration</label>
+                <select id="duration-select">
+                    <option value="15">15 seconds — quick</option>
+                    <option value="30">30 seconds</option>
+                    <option value="60" selected>1 minute</option>
+                    <option value="120">2 minutes</option>
+                    <option value="300">5 minutes</option>
+                    <option value="600">10 minutes</option>
+                    <option value="900">15 minutes</option>
+                    <option value="1800">30 minutes</option>
+                    <option value="2700">45 minutes</option>
+                    <option value="3600">1 hour</option>
+                </select>
+            </div>
+
+            <p id="passage" class="passage" aria-live="polite">Loading a fresh passage...</p>
+            <label class="input-label" for="typing-input">Type the passage here</label>
+            <textarea id="typing-input" rows="5" placeholder="Select Start Test to begin..." disabled></textarea>
+
+            <div class="live-stats" aria-live="polite">
+                <span>Correct characters: <strong id="correct-count">0</strong></span>
+                <span>Incorrect characters: <strong id="incorrect-count">0</strong></span>
+            </div>
+
+            <div class="button-row">
+                <button id="start-button" class="button button-primary" type="button" disabled>Start Test</button>
+                <button id="finish-button" class="button button-secondary" type="button" disabled>Finish Test</button>
+                <button id="restart-button" class="button button-secondary" type="button" disabled>Restart Test</button>
+            </div>
+            <p id="message" class="message" role="status" aria-live="polite"></p>
+        </section>
+
+        <section id="results-panel" class="results-card" aria-labelledby="results-heading" hidden>
+            <h2 id="results-heading">Your results</h2>
+            <div class="score-grid">
+                <div><span>Words per minute</span><strong id="result-wpm">0</strong></div>
+                <div><span>Accuracy</span><strong id="result-accuracy">0%</strong></div>
+                <div><span>Correct characters</span><strong id="result-correct">0</strong></div>
+                <div><span>Incorrect characters</span><strong id="result-incorrect">0</strong></div>
+            </div>
+            <p class="formula-note">WPM = typed characters ÷ 5 ÷ elapsed minutes. Accuracy = correct typed characters ÷ total typed characters × 100.</p>
+            <div id="word-feedback" class="word-feedback" hidden>
+                <h3>Words to review</h3>
+                <p>Red words differ from the passage; the expected spelling is shown beside each one.</p>
+                <ul id="word-feedback-list"></ul>
+            </div>
+        </section>
+
+        <section class="history-card" aria-labelledby="history-heading">
+            <div class="history-heading">
+                <div>
+                    <h2 id="history-heading">Previous test results</h2>
+                    <p class="muted">Your 50 most recent saved tests.</p>
+                </div>
+            </div>
+            <p id="history-message" class="message" role="status" aria-live="polite"></p>
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th scope="col">Date</th>
+                            <th scope="col">WPM</th>
+                            <th scope="col">Accuracy</th>
+                            <th scope="col">Correct</th>
+                            <th scope="col">Incorrect</th>
+                        </tr>
+                    </thead>
+                    <tbody id="results-body"></tbody>
+                </table>
+            </div>
+        </section>
+        <footer>Results are stored locally in the application's SQLite database.</footer>
+    </main>
+</body>
+</html>

@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="description" content="Review your typing speed test score and corrections.">
+    <title>Test Results | Typing Speed Test</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <script src="{{ url_for('static', filename='results.js') }}" defer></script>
+</head>
+<body data-test-id="{{ test_id }}">
+    <main class="page-shell">
+        <header class="page-header">
+            <p class="eyebrow">Test complete</p>
+            <h1>Your test results</h1>
+            <p class="intro">Review your score, compare your typing with the passage, and check corrections.</p>
+        </header>
+
+        <section class="results-card" aria-labelledby="results-heading">
+            <h2 id="results-heading">Score summary</h2>
+            <p id="result-message" class="message" role="status" aria-live="polite">Loading your saved results...</p>
+            <div id="result-details" hidden>
+                <div class="score-grid">
+                    <div><span>Words per minute</span><strong id="result-wpm">0</strong></div>
+                    <div><span>Accuracy</span><strong id="result-accuracy">0%</strong></div>
+                    <div><span>Correct characters</span><strong id="result-correct">0</strong></div>
+                    <div><span>Incorrect characters</span><strong id="result-incorrect">0</strong></div>
+                    <div><span>Test duration</span><strong id="result-duration">0s</strong></div>
+                    <div><span>Completed</span><strong id="result-date">—</strong></div>
+                </div>
+                <p class="formula-note">WPM = typed characters ÷ 5 ÷ elapsed minutes. Accuracy = correct typed characters ÷ total typed characters × 100.</p>
+            </div>
+        </section>
+
+        <section class="results-card" aria-labelledby="comparison-heading">
+            <h2 id="comparison-heading">Passage comparison</h2>
+            <p class="muted">Green characters match. Red characters were mistyped or added, and faded characters were missed.</p>
+            <h3 class="review-label">Expected passage</h3>
+            <p id="expected-text" class="comparison-text"></p>
+            <h3 class="review-label">What you typed</h3>
+            <p id="typed-text" class="comparison-text"></p>
+        </section>
+
+        <section class="results-card" aria-labelledby="corrections-heading">
+            <h2 id="corrections-heading">Words to review</h2>
+            <p class="muted">Incorrect or extra words are shown with the expected spelling.</p>
+            <p id="no-corrections" class="muted" hidden>No word corrections needed. Great work!</p>
+            <ul id="correction-list" class="word-feedback-list"></ul>
+        </section>
+
+        <div class="button-row result-actions">
+            <a class="button button-primary" href="/">Start another test</a>
+        </div>
+        <footer>Results are stored locally in the application's SQLite database.</footer>
+    </main>
+</body>
+</html>

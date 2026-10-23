@@ -1,0 +1,14 @@
+services:
+  typing-speed-test:
+    build: .
+    image: typing-speed-test:local
+    ports:
+      - "5000:5000"
+    environment:
+      DATABASE_PATH: /app/data/typing_test.db
+    volumes:
+      - typing-data:/app/data
+    restart: unless-stopped
+
+volumes:
+  typing-data:
